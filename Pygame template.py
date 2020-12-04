@@ -26,7 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.image.load(
             os.path.join(img_folder, "BODY_male.png")).convert()
         # convert函数作用是将bai图片转化为duSurface对象，pygame现在会自动这么做
-        self.image.set_colorkey(BLACK)
+        self.image.set_colorkey(BLACK) # pygame目前自动裁切png背景
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH / 2, HEIGHT / 2)
         self.y_speed = 5
