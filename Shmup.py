@@ -3,6 +3,7 @@ import random
 from os import path
 
 img_dir = path.join(path.dirname(__file__), 'img')
+snd_dir = path.join(path.dirname(__file__), 'snd')
 # opengameart.org
 WIDTH = 480
 HEIGHT = 600
@@ -27,6 +28,34 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shump!")
 clock = pygame.time.Clock()
 
+font_name = pygame.font.match_font('arial')  # 返回系统中的指定字体
+
+
+def draw_text(surf, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
+
+def newmob():
+    m = Mob()
+    all_sprites.add(m)
+    mobs.add(m)
+
+
+def draw_shield_bar(surf, x, y, pct):
+    if pct < 0:
+        pct = 0
+    BAR_LENGTH = 100
+    BAR_HEIGHT = 10
+    fill = (pct / 100) * BAR_LENGTH
+    outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+    pygame.draw.rect(surf, GREEN, fill_rect)
+    pygame.draw.rect(surf, WHITE, outline_rect, 2)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -41,6 +70,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
+        self.shield = 100
 
     def update(self):
         self.speedx = 0
@@ -59,6 +89,7 @@ class Player(pygame.sprite.Sprite):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
         bullets.add(bullet)
+        shoot_sound.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -139,7 +170,15 @@ meteor_list = [
     'meteorBrown_tiny1.png',
 ]
 for img in meteor_list:
-    meteor_images.append(pygame.image.load(path.join(img_dir,img)).convert())
+    meteor_images.append(pygame.image.load(path.join(img_dir, img)).convert())
+# load sounds
+shoot_sound = pygame.mixer.Sound(path.join(snd_dir, 'pew.wav'))
+expl_sound = []
+for snd in ['expl3.wav', 'expl6.wav']:
+    expl_sound.append(pygame.mixer.Sound(path.join(snd_dir, snd)))
+pygame.mixer.music.load(
+    path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
+pygame.mixer.music.set_volume(0.4)
 
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
@@ -147,10 +186,10 @@ bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 for i in range(8):  # 创建多少个,每个速度在创建的时候就是随机的
-    m = Mob()
-    all_sprites.add(m)
-    mobs.add(m)
+    newmob()
 
+score = 0
+pygame.mixer.music.play(loops=-1)  # -1是循环
 # Game loop
 running = True
 while running:
@@ -171,21 +210,26 @@ while running:
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
     # 两个组碰撞检测 第一个True为第一个组的精灵移除 第二个同理
     for hit in hits:  # 打掉的要加回去
-        m = Mob()
-        all_sprites.add(m)
-        mobs.add(m)
+        score += 50 - hit.radius  # 打到的越小分越高
+        random.choice(expl_sound).play()
+        newmob()
 
     # hit player
-    hits = pygame.sprite.spritecollide(player, mobs, False,
+    hits = pygame.sprite.spritecollide(player, mobs, True,
                                        pygame.sprite.collide_circle)
-    # 某个精灵和指定组碰撞检测
-    if hits:
-        running = False
+    # 某个精灵和指定组碰撞检测 True 撞完消失
+    for hit in hits:
+        player.shield -= hit.radius * 2
+        newmob()
+        if player.shield <= 0:
+            running = False
 
     # Draw / render
     # screen.fill(BLACK)
     screen.blit(background, background_rect)  # pixel
     all_sprites.draw(screen)
+    draw_text(screen, str(score), 18, WIDTH / 2, 10)
+    draw_shield_bar(screen, 5, 5, player.shield)
     # after drawing , flip display
     pygame.display.flip()
 
