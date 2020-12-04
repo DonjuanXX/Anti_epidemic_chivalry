@@ -2,7 +2,7 @@ import pygame
 import random
 from os import path
 
-img_dir = path.join(path.dirname(__file__),'img')
+img_dir = path.join(path.dirname(__file__), 'img')
 # opengameart.org
 WIDTH = 480
 HEIGHT = 600
@@ -29,14 +29,15 @@ clock = pygame.time.Clock()
 
 
 class Player(pygame.sprite.Sprite):
-
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         # self.image = pygame.Surface((50, 40))
         # self.image.fill(GREEN)
-        self.image = pygame.transform.scale(player_img,(50,38))
+        self.image = pygame.transform.scale(player_img, (50, 38))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
+        self.radius = 20  # at lease half size
+        # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
@@ -61,7 +62,6 @@ class Player(pygame.sprite.Sprite):
 
 
 class Mob(pygame.sprite.Sprite):
-
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         # self.image = pygame.Surface((30, 40))
@@ -69,6 +69,8 @@ class Mob(pygame.sprite.Sprite):
         self.image = meteor_img
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * .85 / 2)
+        # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.x = random.randrange(WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
         self.speedy = random.randrange(1, 8)
@@ -84,7 +86,6 @@ class Mob(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         # self.image = pygame.Surface((10, 20))
@@ -102,13 +103,15 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
-# Load graphics
-background = pygame.image.load(path.join(img_dir,"starfield.png")).convert()
-background_rect = background.get_rect()
-player_img = pygame.image.load(path.join(img_dir,"playerShip1_orange.png")).convert()
-meteor_img = pygame.image.load(path.join(img_dir,"meteorBrown_med1.png")).convert()
-bullet_img = pygame.image.load(path.join(img_dir,"laserRed16.png")).convert()
 
+# Load graphics
+background = pygame.image.load(path.join(img_dir, "starfield.png")).convert()
+background_rect = background.get_rect()
+player_img = pygame.image.load(path.join(img_dir,
+                                         "playerShip1_orange.png")).convert()
+meteor_img = pygame.image.load(path.join(img_dir,
+                                         "meteorBrown_med1.png")).convert()
+bullet_img = pygame.image.load(path.join(img_dir, "laserRed16.png")).convert()
 
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
@@ -145,14 +148,15 @@ while running:
         mobs.add(m)
 
     # hit player
-    hits = pygame.sprite.spritecollide(player, mobs, False)
+    hits = pygame.sprite.spritecollide(player, mobs, False,
+                                       pygame.sprite.collide_circle)
     # 某个精灵和指定组碰撞检测
     if hits:
         running = False
 
     # Draw / render
     # screen.fill(BLACK)
-    screen.blit(background, background_rect) # pixel
+    screen.blit(background, background_rect)  # pixel
     all_sprites.draw(screen)
     # after drawing , flip display
     pygame.display.flip()
