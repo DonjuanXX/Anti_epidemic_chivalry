@@ -1,7 +1,8 @@
 import pygame
-import os
 import random
+from os import path
 
+img_dir = path.join(path.dirname(__file__),'img')
 # opengameart.org
 WIDTH = 480
 HEIGHT = 600
@@ -17,8 +18,8 @@ YELLOW = (255, 255, 0)
 # set up assets folders
 # Win:"C:\xx\"
 # Linux: "/USER/XXX"
-game_folder = os.path.dirname(__file__)
-img_folder = os.path.join(game_folder, "img")
+# game_folder = os.path.dirname(__file__)
+# img_folder = os.path.join(game_folder, "img")
 
 pygame.init()
 pygame.mixer.init()  # music
@@ -31,8 +32,10 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((50, 40))
-        self.image.fill(GREEN)
+        # self.image = pygame.Surface((50, 40))
+        # self.image.fill(GREEN)
+        self.image = pygame.transform.scale(player_img,(50,38))
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
@@ -61,8 +64,10 @@ class Mob(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((30, 40))
-        self.image.fill(RED)
+        # self.image = pygame.Surface((30, 40))
+        # self.image.fill(RED)
+        self.image = meteor_img
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
@@ -82,8 +87,10 @@ class Bullet(pygame.sprite.Sprite):
 
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10, 20))
-        self.image.fill(YELLOW)
+        # self.image = pygame.Surface((10, 20))
+        # self.image.fill(YELLOW)
+        self.image = bullet_img
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
@@ -94,6 +101,13 @@ class Bullet(pygame.sprite.Sprite):
         # kill if moves off the top of the screen
         if self.rect.bottom < 0:
             self.kill()
+
+# Load graphics
+background = pygame.image.load(path.join(img_dir,"starfield.png")).convert()
+background_rect = background.get_rect()
+player_img = pygame.image.load(path.join(img_dir,"playerShip1_orange.png")).convert()
+meteor_img = pygame.image.load(path.join(img_dir,"meteorBrown_med1.png")).convert()
+bullet_img = pygame.image.load(path.join(img_dir,"laserRed16.png")).convert()
 
 
 all_sprites = pygame.sprite.Group()
@@ -124,6 +138,7 @@ while running:
 
     # hit mob
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
+    # 两个组碰撞检测 第一个True为第一个组的精灵移除 第二个同理
     for hit in hits:  # 打掉的要加回去
         m = Mob()
         all_sprites.add(m)
@@ -131,11 +146,13 @@ while running:
 
     # hit player
     hits = pygame.sprite.spritecollide(player, mobs, False)
+    # 某个精灵和指定组碰撞检测
     if hits:
         running = False
 
     # Draw / render
-    screen.fill(BLACK)
+    # screen.fill(BLACK)
+    screen.blit(background, background_rect) # pixel
     all_sprites.draw(screen)
     # after drawing , flip display
     pygame.display.flip()
