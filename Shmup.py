@@ -29,7 +29,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shump!")
 clock = pygame.time.Clock()
 
-font_name = pygame.font.match_font('arial')  # 返回系统中的指定字体
+font_name = pygame.font.match_font('arial')  # 系统中的指定
 
 
 def draw_text(surf, text, size, x, y):
