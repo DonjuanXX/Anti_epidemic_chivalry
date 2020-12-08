@@ -13,136 +13,130 @@ from tilemap import *
 from sprites import *
 
 
-def draw_player_img(surf, x, y, img):
-    img_rect = img.get_rect()
-    img_rect.x = x  # 飞机25长,这样就间隔5pixel
-    img_rect.y = y
-    surf.blit(img, img_rect)
-
-
-def draw_player_health(surf, x, y, pct):
-    if pct < 0:
-        pct = 0
-    BAR_LENGTH = 100
-    BAR_HEIGHT = 20
-    fill = pct * BAR_LENGTH
-    outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
-    fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
-    if pct > 0.6:
-        col = GREEN
-    elif pct > 0.3:
-        col = YELLOW
-    else:
-        col = RED
-    pygame.draw.rect(surf, col, fill_rect)
-    pygame.draw.rect(surf, WHITE, outline_rect, 2)
-
-
 class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
+
+        self.start = True
+        self.choosing = False
         self.playing = False
+        self.waiting = False
+        self.paused = False
         self.tutorial = False
         self.description = False
         self.load_date()
-
-    def draw_text(self, text, font_name, size, color, x, y, align='c'):
-        font = pygame.font.Font(font_name, size)
-        text_surface = font.render(text, True, color)
-        text_rect = text_surface.get_rect()
-
-        if align == 'tr':
-            text_rect.topright = (x, y)
-        if align == 'c':
-            text_rect.center = (x, y)
-        self.screen.blit(text_surface, text_rect)
 
     def load_date(self):
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'img')
         snd_folder = path.join(game_folder, 'snd')
         self.map_folder = path.join(game_folder, 'maps')
+
+        self.role1_img = pygame.image.load(path.join(img_folder, ROLE1_IMG)).convert_alpha()
+        self.role1_img_mini = pygame.transform.scale(self.role1_img, (78, 84))
+
+        self.role1_images = {}
+        for role1 in ROLE1_IMAGES:
+            self.role1_images[role1] = pygame.image.load(path.join(img_folder, ROLE1_IMAGES[role1])).convert_alpha()
+
+        self.role2_img = pygame.image.load(path.join(img_folder, ROLE2_IMG)).convert_alpha()
+        self.role2_img_mini = pygame.transform.scale(self.role2_img, (78, 84))
+
+        self.role2_images = {}
+        for role2 in ROLE2_IMAGES:
+            self.role2_images[role2] = pygame.image.load(path.join(img_folder, ROLE2_IMAGES[role2])).convert_alpha()
+
+        self.weapon1_images = {}
+        for weapon1 in WEAPON1_IMAGES:
+            self.weapon1_images[weapon1] = pygame.image.load(
+                path.join(img_folder, WEAPON1_IMAGES[weapon1])).convert_alpha()
+        self.weapon2_images = {}
+        for weapon2 in WEAPON2_IMAGES:
+            self.weapon2_images[weapon2] = pygame.image.load(
+                path.join(img_folder, WEAPON2_IMAGES[weapon2])).convert_alpha()
+
+        self.holdback_img = pygame.image.load(path.join(img_folder, HOLDBACK_IMG)).convert_alpha()
         self.virus_shoot_img = pygame.image.load(path.join(img_folder, VIRUS_SHOOT_IMG)).convert_alpha()
         self.virus_move_img = pygame.image.load(path.join(img_folder, VIRUS_MOVE_IMG)).convert_alpha()
         self.bullet_img = pygame.image.load(path.join(img_folder, BULLET_IMG)).convert_alpha()
-        self.bullet_img = pygame.transform.scale(self.bullet_img, (30, 30))
+        self.bullet_img = pygame.transform.scale(self.bullet_img, (25, 25))
         self.description_img = pygame.image.load(path.join(img_folder, DESCRIPTION_BG)).convert_alpha()
         self.tutorial_img = pygame.image.load(path.join(img_folder, TUTORIAL_BG)).convert_alpha()
         self.start_img = pygame.image.load(path.join(img_folder, START_BG)).convert_alpha()
-        self.user_img = pygame.image.load(path.join(img_folder, USER_IMAGE)).convert_alpha()
-        self.player_images = {}
-        for player in PLAYER_IMAGES:
-            self.player_images[player] = pygame.image.load(path.join(img_folder, PLAYER_IMAGES[player])).convert_alpha()
-        self.weapon_images = {}
-        for weapon in WEAPON_IMAGES:
-            self.weapon_images[weapon] = pygame.image.load(path.join(img_folder, WEAPON_IMAGES[weapon])).convert_alpha()
         self.item_images = {}
         for item in ITEM_IMAGES:
             self.item_images[item] = pygame.image.load(path.join(img_folder, ITEM_IMAGES[item])).convert_alpha()
-
         self.player_hit_sound = pygame.mixer.Sound(path.join(snd_folder, PALYER_HIT_SOUND))
         self.mob_hit_sound = pygame.mixer.Sound(path.join(snd_folder, MOB_HIT_SOUND))
         self.item_pick_sound = pygame.mixer.Sound(path.join(snd_folder, ITEM_PICK_SOUND))
         pygame.mixer.music.load(path.join(snd_folder, BG_MUSIC))
-
+        self.splat = pygame.image.load(path.join(img_folder, SPLAT)).convert_alpha()
+        self.splat = pygame.transform.scale(self.splat, (100, 100))
         self.title_font = path.join(img_folder, 'ZOMBIE.TTF')
         self.hud_font = path.join(img_folder, 'Impacted2.0.ttf')
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
 
+        self.fog = pygame.Surface((WIDTH, HEIGHT))
+        self.fog.fill(NIGHT_COLOR)
+        self.light_mask = pygame.image.load(path.join(img_folder, LIGHT_MASK)).convert_alpha()
+        self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
+        self.light_rect = self.light_mask.get_rect()
+
     def new(self):
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.walls = pygame.sprite.Group()
         self.holes = pygame.sprite.Group()
+        self.decelerations = pygame.sprite.Group()
+        self.holdbacks = pygame.sprite.Group()
         self.viruses = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
         self.map = TiledMap(path.join(self.map_folder, 'new_tilemap.tmx'))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
+        self.night = True
         for tile_object in self.map.tmxdata.objects:
             obj_centerx = tile_object.x + tile_object.width / 2
             obj_centery = tile_object.y + tile_object.height / 2
             if tile_object.name == 'player':
-                self.player = Player(self, obj_centerx, obj_centery)
+                if self.role1_col == YELLOW:
+                    self.player = Player(self, obj_centerx, obj_centery, 'role1')
+                else:
+                    self.player = Player(self, obj_centerx, obj_centery, 'role2')
 
-            if tile_object.name == 'hole':
-                Hole(self, tile_object.x, tile_object.y,
-                     tile_object.width, tile_object.height)
             if tile_object.name == 'wall':
-                Obstacle(self, tile_object.x, tile_object.y,
-                         tile_object.width, tile_object.height)
+                Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+            if tile_object.name == 'hole':
+                Hole(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+            if tile_object.name == 'deceleration':
+                Deceleration(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+
+            if tile_object.name == 'holdback':
+                Holdback(self, tile_object.x, tile_object.y)
+
             if tile_object.name == 'virus_shoot':
                 Virus(self, obj_centerx, obj_centery, 'shoot')
             if tile_object.name == 'virus_movex':
-                # moving x 有位置偏移
                 Virus(self, obj_centerx, obj_centery, 'move_x')
             if tile_object.name == 'virus_movey':
                 Virus(self, obj_centerx, obj_centery, 'move_y')
-            if tile_object.name in ['health', 'power', 'key']:
+            if tile_object.name in ['treatment', 'key', 'light']:
                 Item(self, obj_centerx, obj_centery, tile_object.name)
         self.camera = Camera(self.map.width, self.map.height)
-        self.start = True
-        self.waiting = False
-        self.paused = False
 
     def run(self):
         self.playing = True
         pygame.mixer.music.play(loops=-1)
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000
-
             self.events()
             if not self.paused:
                 self.update()
             self.draw()
-
-    def quit(self):
-        pygame.quit()
-        sys.exit()
 
     def update(self):
         self.all_sprites.update()
@@ -152,25 +146,33 @@ class Game:
             self.playing = False
         hits = pygame.sprite.spritecollide(self.player, self.items, False)
         for hit in hits:
-            if hit.type == 'health' and self.player.health < PLAYER_HEALTH:
+            if hit.type == 'treatment' and self.player.health < self.player.health_orig:
                 hit.picked()
                 self.player.add_health(HEALTH_PILL_AMOUNT)
-            if hit.type == 'power':
-                hit.picked()
-                self.player.damage *= POWERUP
+
             if hit.type == 'key':
                 hit.picked()
+                for holdback in self.holdbacks:
+                    holdback.kill()
 
-        hits = pygame.sprite.spritecollide(self.player, self.bullets, True)
-        for hit in hits:
-            self.player.reduce_health(BULLET_DAMAGE)
+            if hit.type == 'light':
+                hit.picked()
+                self.night = False
+
         hits = pygame.sprite.spritecollide(self.player, self.holes, False)
         for hit in hits:
             self.player.reduce_health(HOLE_DAMAGE)
+        hits = pygame.sprite.spritecollide(self.player, self.bullets, True)
+        for hit in hits:
+            self.player.reduce_health(BULLET_DAMAGE)
+
         hits = pygame.sprite.spritecollide(self.player, self.viruses, False)
         for hit in hits:
             if hit.type == 'move_x' or hit.type == 'move_y':
                 self.player.reduce_health(VIRUS_MOVE_DAMAGE)
+        # if hits:
+        #     print("？？？")
+        #     self.player.hit()
         if self.player.health <= 0:
             self.win = False
             self.playing = False
@@ -181,14 +183,19 @@ class Game:
             if isinstance(sprite, Virus):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
-        draw_player_health(self.screen, 30, 180, self.player.health / PLAYER_HEALTH)  # 画血条
-        draw_player_img(self.screen, 10, 10, self.user_img)
-        self.draw_text(f'Viruses: {len(self.viruses)}', self.hud_font, 30,
-                       WHITE, WIDTH - 10, 10, align='tr')
         if self.paused:
             self.screen.blit(self.dim_screen, (0, 0))
             self.draw_text("Paused", self.title_font, 105, RED, WIDTH // 2, HEIGHT // 2, align='c')
-        pygame.display.flip()  # 更新显示
+        if self.night:
+            self.render_fog()
+        self.draw_player_health(3, 114, self.player.health / self.player.health_orig)
+        self.draw_text(f'Viruses: {len(self.viruses)}', self.hud_font, 30,
+                       WHITE, WIDTH - 10, 10, align='tr')
+        pygame.display.flip()
+
+    def quit(self):
+        pygame.quit()
+        sys.exit()
 
     def events(self):
         for event in pygame.event.get():
@@ -197,6 +204,8 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
+                # if event.key == pygame.K_n:
+                #     self.night = not self.night
                 if self.playing:
                     if event.key == pygame.K_p:
                         self.paused = not self.paused
@@ -206,56 +215,65 @@ class Game:
                             self.description = False
                             self.tutorial = False
                             break
-                    for i in range(len(start_text)):
-                        if start_text[i][1] == YELLOW:
+                    for i in range(len(START_TEXT)):
+                        if self.start_col[i] == YELLOW:
                             if event.key == pygame.K_DOWN:
-                                start_text[i][1] = WHITE
-                                if i == len(start_text) - 1:
-                                    start_text[0][1] = YELLOW
+                                self.start_col[i] = WHITE
+                                if i == len(START_TEXT) - 1:
+                                    self.start_col[0] = YELLOW
                                 else:
-                                    start_text[i + 1][1] = YELLOW
-                                    # print(start_text[1][0]) Tutorial
-                                    # print(start_text[2][0]) Description
+                                    self.start_col[i + 1] = YELLOW
                                 break
                             if event.key == pygame.K_UP:
-                                start_text[i][1] = WHITE
+                                self.start_col[i] = WHITE
                                 if i == 0:
-                                    start_text[len(start_text) - 1][1] = YELLOW
+                                    self.start_col[len(START_TEXT) - 1] = YELLOW
                                 else:
-                                    start_text[i - 1][1] = YELLOW
+                                    self.start_col[i - 1] = YELLOW
                                 break
 
-                            if event.key == pygame.K_RETURN and start_text[i][0] == 'Play':
+                            # print(START_TEXT[i][0])
+                            if event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Play':
                                 self.start = False
-                            if event.key == pygame.K_RETURN and start_text[i][0] == 'Tutorial':
-                                #     self.start = False
+                            elif event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Tutorial':
+                                # print("tutorial")
                                 self.tutorial = True
-                                pass
-                            if event.key == pygame.K_RETURN and start_text[i][0] == 'Description':
+                            elif event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Description':
+                                # print("Description")
                                 self.description = True
+                if self.choosing:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                        if self.role1_col == YELLOW:
+                            self.role1_col = WHITE
+                            self.role2_col = YELLOW
+                        else:
+                            self.role2_col = WHITE
+                            self.role1_col = YELLOW
+
                 if self.waiting and event.key == pygame.K_RETURN:
                     self.waiting = False
 
     def show_start_screen(self):
-        self.screen.blit(self.start_img, self.start_img.get_rect())
-        self.draw_text("GAME START", self.title_font, 150, GREEN,
-                       WIDTH // 2, HEIGHT / 6)
-        for row in start_text:
-            self.draw_text(row[0], self.title_font, 75, row[1], WIDTH // 2, row[2])
-
-        pygame.display.flip()
-        self.events()
-
-    def show_screen(self, opt):
-        if opt == "tutorial":
-            self.screen.blit(self.tutorial_img, self.tutorial_img.get_rect())
-        else:
-            self.screen.blit(self.description_img, self.description_img.get_rect())
-        pygame.display.flip()  # 更新显示到屏幕表面
-        self.events()
+        self.start = True
+        self.start_col = []
+        for i in range(len(START_TEXT)):
+            self.start_col.append(WHITE)
+        self.start_col[0] = YELLOW
+        while g.start:
+            while self.tutorial or self.description:
+                # print(f'{self.tutorial},{self.description}')
+                self.show_screen()
+            self.screen.blit(self.start_img, self.start_img.get_rect())
+            self.draw_text("GAME START", self.title_font, 150, (34, 139, 34),
+                           WIDTH // 2, HEIGHT / 4)
+            for i in range(len(START_TEXT)):
+                self.draw_text(START_TEXT[i][0], self.title_font, 75,
+                               self.start_col[i], WIDTH // 2, START_TEXT[i][1])
+            pygame.display.flip()
+            self.events()
 
     def show_go_screen(self):
-        self.screen.fill(BLACK)
+        self.screen.blit(self.start_img, self.start_img.get_rect())
         if self.win:
             txt = "YOU WIN !"
         else:
@@ -269,19 +287,94 @@ class Game:
         while self.waiting:
             self.events()
 
+    def render_fog(self):
+        # draw the light mask
+        self.fog.fill(NIGHT_COLOR)
+        self.light_rect.center = self.camera.apply(self.player).center
+        self.fog.blit(self.light_mask, self.light_rect)
+        self.screen.blit(self.fog, (0, 0), special_flags=pygame.BLEND_MULT)
+
+    def draw_player_health(self, x, y, pct):
+        surf = self.screen
+        if pct < 0:
+            pct = 0
+        BAR_LENGTH = 100
+        BAR_HEIGHT = 20
+        fill = pct * BAR_LENGTH
+        outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+        fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+        if pct > 0.6:
+            col = GREEN
+        elif pct > 0.3:
+            col = YELLOW
+        else:
+            col = RED
+        pygame.draw.rect(surf, col, fill_rect)
+        pygame.draw.rect(surf, WHITE, outline_rect, 2)
+
+        if self.role1_col == YELLOW:
+            self.draw_role(14, 10, self.role1_img_mini, ROLE1_NAME, WHITE)
+        else:
+            self.draw_role(14, 10, self.role2_img_mini, ROLE2_NAME, WHITE)
+
+    def draw_text(self, text, font_name, size, color, x, y, align='c'):
+        font = pygame.font.Font(font_name, size)
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        if align == 'tr':
+            text_rect.topright = (x, y)
+        if align == 'c':
+            text_rect.center = (x, y)
+        self.screen.blit(text_surface, text_rect)
+
+    def draw_role(self, x, y, img, name, color, health="", attack=""):
+        img_rect = img.get_rect()
+        img_rect.x = x
+        img_rect.y = y
+        self.screen.blit(img, img_rect)
+        text_x = img_rect.centerx
+        text_y = img_rect.bottom
+        if self.choosing:
+            size = 50
+            text_y = img_rect.bottom + 50
+            self.draw_text(f"health:  {health}", self.hud_font, 30, color, text_x, text_y + 60)
+            self.draw_text(f"attack:  {attack}", self.hud_font, 30, color, text_x, text_y + 100)
+        else:
+            size = 10
+            text_y = img_rect.bottom + 10
+
+        self.draw_text(name, self.hud_font, size, color, text_x, text_y)
+
+    def show_choose_screen(self):
+        self.choosing = True
+        self.waiting = True
+        self.role1_col = YELLOW
+        self.role2_col = WHITE
+        while self.waiting:
+            self.screen.fill(BLACK)
+            self.draw_text("choose a role", self.title_font, 100, RED, WIDTH / 2, HEIGHT / 6)
+            h = HEIGHT / 6 + 100
+            self.draw_role(WIDTH / 2 - 314, h, self.role1_img, ROLE1_NAME,
+                           self.role1_col, ROLE1_HEALTH, ROLE1_DAMAGE)
+            self.draw_role(WIDTH / 2 + 50, h, self.role2_img, ROLE2_NAME,
+                           self.role2_col, ROLE2_HEALTH, ROLE2_DAMAGE)
+            pygame.display.flip()
+            self.events()
+        self.choosing = False
+
+    def show_screen(self):
+        if self.tutorial:
+            self.screen.blit(self.tutorial_img, self.tutorial_img.get_rect())
+        elif self.description:
+            self.screen.blit(self.description_img, self.description_img.get_rect())
+        pygame.display.flip()
+        self.events()
+
 
 g = Game()
-
 while True:
+    g.show_start_screen()
+    g.show_choose_screen()
     g.new()
-    while g.start:
-        if not g.tutorial and not g.description:
-            g.show_start_screen()
-        # 標志
-        if g.tutorial:
-            g.show_screen("tutorial")
-        if g.description:
-            g.show_screen("description")
-
     g.run()
     g.show_go_screen()

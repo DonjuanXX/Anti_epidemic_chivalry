@@ -15,7 +15,7 @@ class TiledMap:
         self.width = tm.width * tm.tilewidth
         self.height = tm.height * tm.tileheight
         self.tmxdata = tm
-        
+
     def render(self, surface):
         ti = self.tmxdata.get_tile_image_by_gid
         for layer in self.tmxdata.visible_layers:
@@ -23,9 +23,9 @@ class TiledMap:
                 for x, y, grid in layer:
                     tile = ti(grid)
                     if tile:
-                        surface.blit(tile, (x * self.tmxdata.tilewidth, 
+                        surface.blit(tile, (x * self.tmxdata.tilewidth,
                                             y * self.tmxdata.tileheight))
-                        
+
     def make_map(self):
         temp_surface = pygame.Surface((self.width, self.height))
         self.render(temp_surface)
@@ -36,13 +36,13 @@ class Camera:
         self.camera = pygame.Rect(0, 0, width, height)
         self.width = width
         self.height = height
-        
+
     def apply(self, entity):
         return entity.rect.move(self.camera.topleft)
-    
+
     def apply_rect(self, rect):
         return rect.move(self.camera.topleft)
-    
+
     def update(self, target):
         x = -target.rect.x + WIDTH//2
         y = -target.rect.y + HEIGHT//2

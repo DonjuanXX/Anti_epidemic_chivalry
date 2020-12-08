@@ -22,51 +22,71 @@ TILESIZE = 64
 gridWidth = WIDTH / TILESIZE
 gridHeight = HEIGHT / TILESIZE
 
-PLAYER_SPEED = 500
-PLAYER_IMAGES = {'left': 'man_left.png',
-                 'right': 'man_right.png',
-                 'up': 'man_up.png',
-                 'down': 'man_down.png'}
-PLAYER_HEALTH = 300
-ATTACK_DISTANCE = 50
-WEAPON_IMAGES = {'left': 'knife_left.png',
-                 'right': 'knife_right.png',
-                 'up': 'knife_up.png',
-                 'down': 'knife_down.png'}
+DESCRIPTION_BG = 'description.png'
+TUTORIAL_BG = 'zjl.png'
+START_BG = 'START.png'
 
-ATTACK_DAMAGE = 10
+ROLE1_HEALTH = 200
+ROLE1_DAMAGE = 10
+ROLE1_IMG = 'Zhong.png'
+ROLE1_NAME = 'Zhong'
+ROLE1_IMAGES = {'left': 'z_left.png',
+                'right': 'z_right.png',
+                'up': 'z_up.png',
+                'down': 'z_down.png'}
+ROLE2_HEALTH = 300
+ROLE2_DAMAGE = 7
+ROLE2_IMG = 'Fauci.png'
+ROLE2_NAME = 'Fauci'
+ROLE2_IMAGES = {'left': 'f_left.png',
+                'right': 'f_right.png',
+                'up': 'f_up.png',
+                'down': 'f_down.png'}
+PLAYER_SPEED = 500
+PLAYER_SPEED_SLOW = 300
+
+WEAPON1_IMAGES = {'left': 'knife_left.png',
+                  'right': 'knife_right.png',
+                  'up': 'knife_up.png',
+                  'down': 'knife_down.png'}
+
+WEAPON2_IMAGES = {'left': 'needle_left.png',
+                  'right': 'needle_right.png',
+                  'up': 'needle_up.png',
+                  'down': 'needle_down.png'}
+
 
 
 VIRUS_SHOOT_IMG = 'virus_shoot.png'
 VIRUS_SHOOT_HEALTH = 1000
 
 VIRUS_MOVE_IMG = 'virus_move.png'
-VIRUS_MOVE_HEALTH = 100
+VIRUS_MOVE_HEALTH = 300
 VIRUS_MOVE_SPEED = 300
 VIRUS_MOVE_DAMAGE = 2
+VIRUS_MOVE_DISTANCE = 200
 
 BULLET_IMG = 'bullet.png'
 BULLET_SPEED = [0, 300, -300]
 BULLET_RATE = 500
-SHOOT_DISTANCE = 500
 BULLET_DAMAGE = 5
-BULLET_DIRECTION = ['left', 'right', 'up', 'down']
+
 
 HOLE_DAMAGE = 0.5
 
-ITEM_IMAGES = {'health': 'health_pill.png',
-               'power': 'powerup.png',
-               'key': 'key.png'}
-HEALTH_PILL_AMOUNT = 20
-POWERUP = 1.8
+ITEM_IMAGES = {'treatment': 'treatment.png',
+               'key': 'key.png',
+               'light':'light.png'}
+HEALTH_PILL_AMOUNT = 50
 
-NO_ENTRY_IMG = 'noEntry.png'
+
+HOLDBACK_IMG = 'holdback.png'
 
 WALL_LAYER = 1
 PLAYER_LAYER = 2
 BULLET_LAYER = 3
 WEAPON_LAYER = 3
-MOB_LAYER = 2
+VIRUS_LAYER = 2
 ITEMS_LAYER = 1
 
 BG_MUSIC = 'BGM.ogg'
@@ -75,17 +95,14 @@ MOB_HIT_SOUND = 'hit.wav'
 ITEM_PICK_SOUND = 'item_pick.wav'
 
 
-row1 = ["Play", YELLOW, HEIGHT*3/6]
-row2 = ["Tutorial", WHITE, HEIGHT*4/6]
-row3 = ["Description", WHITE, HEIGHT*5/6]
-start_text = [row1]+[row2]+[row3]
+START_TEXT = [["Play", HEIGHT*3/6],
+              ["Tutorial", HEIGHT*4/6],
+              ["Description", HEIGHT*5/6]]
 
-DESCRIPTION_BG = 'description.png'
-TUTORIAL_BG = 'zjl.png'
-START_BG = 'START.png'
-USER_IMAGES = {'zns': 'zns.png',
-               'fq': 'fq.png'}
+NIGHT_COLOR = (20, 20, 20)
+LIGHT_RADIUS = (600, 600)
+LIGHT_MASK = "light_350_med.png"
 
-USER_IMAGE = "fq.png"
+# DAMAGE_ALPHA = [i for i in range(0, 255, 55)]
 
-VIRUS_MOVE_DISTANCE = 300
+SPLAT = 'splat green.png'
