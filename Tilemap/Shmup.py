@@ -415,7 +415,13 @@ while running:
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
     draw_shield_bar(screen, 5, 5, player.shield)
     draw_lives(screen, WIDTH - 100, 5, player.lives, player_mini_img)
+    """def draw_lives(surf, x, y, lives, img):
+        for i in range(lives):
+            img_rect = img.get_rect()
+            img_rect.x = x + 30 * i  # 飞机25长,这样就间隔5pixel
+            img_rect.y = y
+            surf.blit(img, img_rect)"""
     # after drawing , flip display
-    pygame.display.flip()
+    pygame.display.flip() # 更新显示
 
 pygame.quit()
