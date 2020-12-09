@@ -107,10 +107,10 @@ class Player(pygame.sprite.Sprite):
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
         self.collide(self.game.walls, 'x')
-        # self.collide(self.game.viruses, 'x')
+        self.collide(self.game.viruses_shoot, 'x')
         self.rect.y = self.y
         self.collide(self.game.walls, 'y')
-        # self.collide(self.game.viruses, 'y')
+        self.collide(self.game.viruses_shoot, 'y')
 
     def add_health(self, amount):
         self.health += amount
@@ -150,7 +150,9 @@ class Weapon(pygame.sprite.Sprite):
 
     def update(self):
         self.kill()
-        hits = pygame.sprite.spritecollide(self, self.game.viruses, False)
+        hits = pygame.sprite.spritecollide(self, self.game.viruses_shoot, False) + pygame.sprite.spritecollide(self,
+                                                                                                               self.game.viruses_move,
+                                                                                                               False)
         if hits:
             self.game.mob_hit_sound.play()
             hits[0].health -= self.game.player.damage
@@ -159,15 +161,17 @@ class Weapon(pygame.sprite.Sprite):
 class Virus(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
         self._layer = VIRUS_LAYER
-        self.groups = game.all_sprites, game.viruses
-        pygame.sprite.Sprite.__init__(self, self.groups)
+        # self.groups = game.all_sprites, game.viruses_move, game.viruses_shoot
+        # pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.type = type
         if self.type == 'shoot':
+            self.groups = game.all_sprites, game.viruses_shoot
             self.image = game.virus_shoot_img.copy()
             self.health = VIRUS_SHOOT_HEALTH
             self.last_shot = pygame.time.get_ticks()
         else:
+            self.groups = game.all_sprites, game.viruses_move
             self.image = game.virus_move_img.copy()
             self.health = VIRUS_MOVE_HEALTH
         if self.type == 'move_x':
@@ -176,6 +180,7 @@ class Virus(pygame.sprite.Sprite):
         if self.type == 'move_y':
             self.vx = 0
             self.vy = VIRUS_MOVE_SPEED
+        pygame.sprite.Sprite.__init__(self, self.groups)
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
@@ -209,7 +214,7 @@ class Virus(pygame.sprite.Sprite):
             self.kill()
             self.game.map_img.blit(self.game.splat, (self.x - 40, self.y - 30))
             if random.random() > 0.8:
-                Item(self.game, self.x-5, self.y, 'treatment')
+                Item(self.game, self.x - 5, self.y, 'treatment')
 
     def draw_health(self):
         if self.type == 'shoot':

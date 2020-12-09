@@ -92,7 +92,8 @@ class Game:
         self.holes = pygame.sprite.Group()
         self.decelerations = pygame.sprite.Group()
         self.holdbacks = pygame.sprite.Group()
-        self.viruses = pygame.sprite.Group()
+        self.viruses_shoot = pygame.sprite.Group()
+        self.viruses_move = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
         self.map = TiledMap(path.join(self.map_folder, 'new_tilemap.tmx'))
@@ -141,7 +142,8 @@ class Game:
     def update(self):
         self.all_sprites.update()
         self.camera.update(self.player)
-        if len(self.viruses) == 0:
+        self.viruses_amount = len(self.viruses_move)+len(self.viruses_shoot)
+        if self.viruses_amount == 0:
             self.win = True
             self.playing = False
         hits = pygame.sprite.spritecollide(self.player, self.items, False)
@@ -166,7 +168,7 @@ class Game:
         for hit in hits:
             self.player.reduce_health(BULLET_DAMAGE)
 
-        hits = pygame.sprite.spritecollide(self.player, self.viruses, False)
+        hits = pygame.sprite.spritecollide(self.player, self.viruses_move, False)
         for hit in hits:
             if hit.type == 'move_x' or hit.type == 'move_y':
                 self.player.reduce_health(VIRUS_MOVE_DAMAGE)
@@ -189,7 +191,7 @@ class Game:
         if self.night:
             self.render_fog()
         self.draw_player_health(3, 114, self.player.health / self.player.health_orig)
-        self.draw_text(f'Viruses: {len(self.viruses)}', self.hud_font, 30,
+        self.draw_text(f'Viruses: {self.viruses_amount}', self.hud_font, 30,
                        WHITE, WIDTH - 10, 10, align='tr')
         pygame.display.flip()
 
