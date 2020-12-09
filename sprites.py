@@ -5,7 +5,6 @@ Created on Fri Dec  4 00:55:27 2020
 @author: admin
 """
 
-import pygame
 import random
 from settings import *
 
@@ -135,17 +134,17 @@ class Weapon(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         player = game.player
         if dir == 'left':
-            self.rect.x = x - self.rect.width * 3 / 4
-            self.rect.y = y + self.rect.height / 4
+            self.rect.x = x - self.rect.width + 3
+            self.rect.y = y
         if dir == 'right':
-            self.rect.x = x + player.rect.width - self.rect.width / 3
-            self.rect.y = y + player.rect.height - self.rect.height / 2
+            self.rect.x = x + player.rect.width - 11
+            self.rect.y = y + player.rect.height - 12
         if dir == 'up':
             self.rect.x = x + player.rect.width - self.rect.width
-            self.rect.y = y - self.rect.height * 3 / 4
+            self.rect.y = y - self.rect.height + 3
         if dir == 'down':
-            self.rect.x = x + self.rect.width / 4
-            self.rect.y = y + player.rect.height * 3 / 4
+            self.rect.x = x
+            self.rect.y = y + player.rect.height - 3
         self.last_attack = pygame.time.get_ticks()
 
     def update(self):

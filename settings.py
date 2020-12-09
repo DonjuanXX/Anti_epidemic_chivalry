@@ -55,8 +55,6 @@ WEAPON2_IMAGES = {'left': 'needle_left.png',
                   'up': 'needle_up.png',
                   'down': 'needle_down.png'}
 
-
-
 VIRUS_SHOOT_IMG = 'virus_shoot.png'
 VIRUS_SHOOT_HEALTH = 1000
 
@@ -71,14 +69,12 @@ BULLET_SPEED = [0, 300, -300]
 BULLET_RATE = 500
 BULLET_DAMAGE = 5
 
-
 HOLE_DAMAGE = 0.5
 
 ITEM_IMAGES = {'treatment': 'treatment.png',
                'key': 'key.png',
-               'light':'light.png'}
+               'light': 'light.png'}
 HEALTH_PILL_AMOUNT = 50
-
 
 HOLDBACK_IMG = 'holdback.png'
 
@@ -89,15 +85,14 @@ WEAPON_LAYER = 3
 VIRUS_LAYER = 2
 ITEMS_LAYER = 1
 
-BG_MUSIC = 'BGM.ogg'
+BG_MUSIC = 'ghost-city.mp3'
 PALYER_HIT_SOUND = 'player_hit.wav'
 MOB_HIT_SOUND = 'hit.wav'
 ITEM_PICK_SOUND = 'item_pick.wav'
 
-
-START_TEXT = [["Play", HEIGHT*3/6],
-              ["Tutorial", HEIGHT*4/6],
-              ["Description", HEIGHT*5/6]]
+START_TEXT = [["Play", HEIGHT * 3 / 6],
+              ["Tutorial", HEIGHT * 4 / 6],
+              ["Description", HEIGHT * 5 / 6]]
 
 NIGHT_COLOR = (20, 20, 20)
 LIGHT_RADIUS = (600, 600)

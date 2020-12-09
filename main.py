@@ -5,10 +5,8 @@ Created on Sun Nov 29 23:45:16 2020
 @author: admin
 """
 
-import pygame
 import sys
 from os import path
-from settings import *
 from tilemap import *
 from sprites import *
 
@@ -142,7 +140,7 @@ class Game:
     def update(self):
         self.all_sprites.update()
         self.camera.update(self.player)
-        self.viruses_amount = len(self.viruses_move)+len(self.viruses_shoot)
+        self.viruses_amount = len(self.viruses_move) + len(self.viruses_shoot)
         if self.viruses_amount == 0:
             self.win = True
             self.playing = False

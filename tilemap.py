@@ -5,9 +5,9 @@ Created on Fri Dec  4 00:52:14 2020
 @author: admin
 """
 
-import pygame
 import pytmx
 from settings import *
+
 
 class TiledMap:
     def __init__(self, filename):
@@ -31,6 +31,7 @@ class TiledMap:
         self.render(temp_surface)
         return temp_surface
 
+
 class Camera:
     def __init__(self, width, height):
         self.camera = pygame.Rect(0, 0, width, height)
@@ -44,8 +45,8 @@ class Camera:
         return rect.move(self.camera.topleft)
 
     def update(self, target):
-        x = -target.rect.x + WIDTH//2
-        y = -target.rect.y + HEIGHT//2
+        x = -target.rect.x + WIDTH // 2
+        y = -target.rect.y + HEIGHT // 2
         x = min(0, x)
         y = min(0, y)
         x = max(-(self.width - WIDTH), x)
