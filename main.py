@@ -75,7 +75,7 @@ class Game:
         pygame.mixer.music.load(path.join(snd_folder, BG_MUSIC))
         self.splat = pygame.image.load(path.join(img_folder, SPLAT)).convert_alpha()
         self.splat = pygame.transform.scale(self.splat, (100, 100))
-        self.title_font = path.join(img_folder, 'ZOMBIE.TTF')
+        self.title_font = path.join(img_folder, 'DIN Alternate Bold.ttf')
         self.hud_font = path.join(img_folder, 'Impacted2.0.ttf')
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
@@ -264,8 +264,8 @@ class Game:
                 # print(f'{self.tutorial},{self.description}')
                 self.show_screen()
             self.screen.blit(self.start_img, self.start_img.get_rect())
-            self.draw_text("GAME START", self.title_font, 150, (34, 139, 34),
-                           WIDTH // 2, HEIGHT / 4)
+            # self.draw_text("GAME START", self.title_font, 150, (34, 139, 34),
+            #                WIDTH // 2, HEIGHT / 4)
             for i in range(len(START_TEXT)):
                 self.draw_text(START_TEXT[i][0], self.title_font, 75,
                                self.start_col[i], WIDTH // 2, START_TEXT[i][1])
@@ -278,7 +278,7 @@ class Game:
             txt = "YOU WIN !"
         else:
             txt = "GAME OVER"
-        self.draw_text(txt, self.title_font, 150, RED,
+        self.draw_text(txt, self.title_font, 150, YELLOW,
                        WIDTH / 2, HEIGHT / 2)
         self.draw_text("Press [enter] key to play again", self.title_font,
                        60, WHITE, WIDTH // 2, HEIGHT * 3 / 4)

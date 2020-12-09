@@ -23,7 +23,7 @@ gridWidth = WIDTH / TILESIZE
 gridHeight = HEIGHT / TILESIZE
 
 DESCRIPTION_BG = 'description.png'
-TUTORIAL_BG = 'zjl.png'
+TUTORIAL_BG = 'tutorial.png'
 START_BG = 'START.png'
 
 ROLE1_HEALTH = 200

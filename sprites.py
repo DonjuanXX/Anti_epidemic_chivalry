@@ -107,10 +107,10 @@ class Player(pygame.sprite.Sprite):
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
         self.collide(self.game.walls, 'x')
-        self.collide(self.game.viruses, 'x')
+        # self.collide(self.game.viruses, 'x')
         self.rect.y = self.y
         self.collide(self.game.walls, 'y')
-        self.collide(self.game.viruses, 'y')
+        # self.collide(self.game.viruses, 'y')
 
     def add_health(self, amount):
         self.health += amount
