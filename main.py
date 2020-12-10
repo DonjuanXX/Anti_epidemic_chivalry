@@ -13,6 +13,9 @@ from sprites import *
 
 class Game:
     def __init__(self):
+        """
+        Initialize the game class
+        """
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
@@ -31,6 +34,9 @@ class Game:
         self.load_date()
 
     def load_date(self):
+        """
+        Load required music, image and map resources
+        """
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'img')
         snd_folder = path.join(game_folder, 'snd')
@@ -89,6 +95,9 @@ class Game:
         self.light_rect = self.light_shape.get_rect()
 
     def new(self):
+        """
+        Initialize the sprite group, camera and create objects according to the map specifications
+        """
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.walls = pygame.sprite.Group()
         self.holes = pygame.sprite.Group()
@@ -129,6 +138,9 @@ class Game:
         self.camera = Camera(self.map.width, self.map.height)
 
     def run(self):
+        """
+        Start function
+        """
         self.playing = True
         pygame.mixer.music.play(loops=-1)
         while self.playing:
@@ -139,6 +151,9 @@ class Game:
             self.draw()
 
     def update(self):
+        """
+        Update on collisions between different sprites
+        """
         self.all_sprites.update()
         self.camera.update(self.player)
         self.viruses_amount = len(self.viruses_move) + len(self.viruses_shoot)
@@ -150,12 +165,10 @@ class Game:
             if hit.type == 'treatment' and self.player.health < self.player.health_orig:
                 hit.picked()
                 self.player.add_health(HEALTH_PILL_AMOUNT)
-
             if hit.type == 'key':
                 hit.picked()
                 for holdback in self.holdbacks:
                     holdback.kill()
-
             if hit.type == 'light':
                 hit.picked()
                 self.dark = False
@@ -166,7 +179,6 @@ class Game:
         hits = pygame.sprite.spritecollide(self.player, self.shooting, True)
         for hit in hits:
             self.player.reduce_health(BULLET_DAMAGE)
-
         hits = pygame.sprite.spritecollide(self.player, self.viruses_move, False)
         for hit in hits:
             if hit.type == 'move_x' or hit.type == 'move_y':
@@ -176,6 +188,10 @@ class Game:
             self.playing = False
 
     def draw(self):
+        """
+
+        :return:
+        """
         self.screen.blit(self.map_img, self.camera.apply_rect(self.map_rect))
         for sprite in self.all_sprites:
             if isinstance(sprite, Virus):

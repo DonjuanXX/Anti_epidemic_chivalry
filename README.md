@@ -1,6 +1,7 @@
 # Anti_epidemic_chivalry
-## This is the work record of pygame
-## This is a horizontal shooting game with the theme of eliminating viruses
+## This is the work record of pygame.  
+This is a horizontal shooting game with the theme of eliminating viruses
+
 To run the Anti Epidemic Chivalry, you need to have at least a python3 interpreter and install pytmx library for successfully running.
 In addition, this game reuqires pygame (2.0.0), sys and os libraries.
 
