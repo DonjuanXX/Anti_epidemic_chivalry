@@ -3,7 +3,7 @@ import sys
 from os import path
 from settings import *
 from sprites import *
-from tilemap import *
+from map import *
 
 
 # 先建對象，之後建img，之後建組

@@ -7,7 +7,7 @@ Created on Sun Nov 29 23:45:16 2020
 
 import sys
 from os import path
-from tilemap import *
+from map import *
 from sprites import *
 
 
@@ -18,13 +18,16 @@ class Game:
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
 
-        self.start = True
+        self.game_begin = True
         self.choosing = False
+        self.how_to_play = False
         self.playing = False
         self.waiting = False
+        self.again = False
         self.paused = False
         self.tutorial = False
         self.description = False
+        self.start = True
         self.load_date()
 
     def load_date(self):
@@ -59,11 +62,12 @@ class Game:
         self.holdback_img = pygame.image.load(path.join(img_folder, HOLDBACK_IMG)).convert_alpha()
         self.virus_shoot_img = pygame.image.load(path.join(img_folder, VIRUS_SHOOT_IMG)).convert_alpha()
         self.virus_move_img = pygame.image.load(path.join(img_folder, VIRUS_MOVE_IMG)).convert_alpha()
-        self.bullet_img = pygame.image.load(path.join(img_folder, BULLET_IMG)).convert_alpha()
-        self.bullet_img = pygame.transform.scale(self.bullet_img, (25, 25))
+        self.shoot_img = pygame.image.load(path.join(img_folder, SHOOT_IMG)).convert_alpha()
+        self.shoot_img = pygame.transform.scale(self.shoot_img, (25, 25))
         self.description_img = pygame.image.load(path.join(img_folder, DESCRIPTION_BG)).convert_alpha()
         self.tutorial_img = pygame.image.load(path.join(img_folder, TUTORIAL_BG)).convert_alpha()
         self.start_img = pygame.image.load(path.join(img_folder, START_BG)).convert_alpha()
+        self.how_img = pygame.image.load(path.join(img_folder, HOW_BG)).convert_alpha()
         self.item_images = {}
         for item in ITEM_IMAGES:
             self.item_images[item] = pygame.image.load(path.join(img_folder, ITEM_IMAGES[item])).convert_alpha()
@@ -71,18 +75,18 @@ class Game:
         self.mob_hit_sound = pygame.mixer.Sound(path.join(snd_folder, MOB_HIT_SOUND))
         self.item_pick_sound = pygame.mixer.Sound(path.join(snd_folder, ITEM_PICK_SOUND))
         pygame.mixer.music.load(path.join(snd_folder, BG_MUSIC))
-        self.splat = pygame.image.load(path.join(img_folder, SPLAT)).convert_alpha()
-        self.splat = pygame.transform.scale(self.splat, (100, 100))
+        self.splat = pygame.image.load(path.join(img_folder, BLOOD)).convert_alpha()
+        self.splat = pygame.transform.scale(self.splat, (70, 70))
         self.title_font = path.join(img_folder, 'DIN Alternate Bold.ttf')
         self.hud_font = path.join(img_folder, 'Impacted2.0.ttf')
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
 
-        self.fog = pygame.Surface((WIDTH, HEIGHT))
-        self.fog.fill(NIGHT_COLOR)
-        self.light_mask = pygame.image.load(path.join(img_folder, LIGHT_MASK)).convert_alpha()
-        self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
-        self.light_rect = self.light_mask.get_rect()
+        self.dim = pygame.Surface((WIDTH, HEIGHT))
+        self.dim.fill(DARK_COLOR)
+        self.light_shape = pygame.image.load(path.join(img_folder, LIGHT_SHAPE)).convert_alpha()
+        self.light_shape = pygame.transform.scale(self.light_shape, LIGHT_RADIUS)
+        self.light_rect = self.light_shape.get_rect()
 
     def new(self):
         self.all_sprites = pygame.sprite.LayeredUpdates()
@@ -92,12 +96,12 @@ class Game:
         self.holdbacks = pygame.sprite.Group()
         self.viruses_shoot = pygame.sprite.Group()
         self.viruses_move = pygame.sprite.Group()
-        self.bullets = pygame.sprite.Group()
+        self.shooting = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
         self.map = TiledMap(path.join(self.map_folder, 'new_tilemap.tmx'))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
-        self.night = True
+        self.dark = True
         for tile_object in self.map.tmxdata.objects:
             obj_centerx = tile_object.x + tile_object.width / 2
             obj_centery = tile_object.y + tile_object.height / 2
@@ -106,17 +110,14 @@ class Game:
                     self.player = Player(self, obj_centerx, obj_centery, 'role1')
                 else:
                     self.player = Player(self, obj_centerx, obj_centery, 'role2')
-
             if tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'hole':
                 Hole(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'deceleration':
                 Deceleration(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
-
             if tile_object.name == 'holdback':
                 Holdback(self, tile_object.x, tile_object.y)
-
             if tile_object.name == 'virus_shoot':
                 Virus(self, obj_centerx, obj_centery, 'shoot')
             if tile_object.name == 'virus_movex':
@@ -157,12 +158,12 @@ class Game:
 
             if hit.type == 'light':
                 hit.picked()
-                self.night = False
+                self.dark = False
 
         hits = pygame.sprite.spritecollide(self.player, self.holes, False)
         for hit in hits:
             self.player.reduce_health(HOLE_DAMAGE)
-        hits = pygame.sprite.spritecollide(self.player, self.bullets, True)
+        hits = pygame.sprite.spritecollide(self.player, self.shooting, True)
         for hit in hits:
             self.player.reduce_health(BULLET_DAMAGE)
 
@@ -170,9 +171,6 @@ class Game:
         for hit in hits:
             if hit.type == 'move_x' or hit.type == 'move_y':
                 self.player.reduce_health(VIRUS_MOVE_DAMAGE)
-        # if hits:
-        #     print("？？？")
-        #     self.player.hit()
         if self.player.health <= 0:
             self.win = False
             self.playing = False
@@ -186,8 +184,8 @@ class Game:
         if self.paused:
             self.screen.blit(self.dim_screen, (0, 0))
             self.draw_text("Paused", self.title_font, 105, RED, WIDTH // 2, HEIGHT // 2, align='c')
-        if self.night:
-            self.render_fog()
+        if self.dark:
+            self.make_dark()
         self.draw_player_health(3, 114, self.player.health / self.player.health_orig)
         self.draw_text(f'Viruses: {self.viruses_amount}', self.hud_font, 30,
                        WHITE, WIDTH - 10, 10, align='tr')
@@ -204,8 +202,6 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
-                # if event.key == pygame.K_n:
-                #     self.night = not self.night
                 if self.playing:
                     if event.key == pygame.K_p:
                         self.paused = not self.paused
@@ -232,14 +228,12 @@ class Game:
                                     self.start_col[i - 1] = YELLOW
                                 break
 
-                            # print(START_TEXT[i][0])
                             if event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Play':
+                                self.choosing = True
                                 self.start = False
                             elif event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Tutorial':
-                                # print("tutorial")
                                 self.tutorial = True
                             elif event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Description':
-                                # print("Description")
                                 self.description = True
                 if self.choosing:
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -249,28 +243,59 @@ class Game:
                         else:
                             self.role2_col = WHITE
                             self.role1_col = YELLOW
+                    if event.key == pygame.K_q:
+                        self.choosing = False
+                        self.waiting = False
+                        self.start = True
+                        break
 
                 if self.waiting and event.key == pygame.K_RETURN:
                     self.waiting = False
+                    # self.start = True
+                    self.how_to_play = True
+
+                elif self.how_to_play and event.key == pygame.K_RETURN:
+                    self.how_to_play = False
+                    self.game_begin = False
+
+                elif self.again and event.key == pygame.K_RETURN:
+                    self.start = True
+                    self.again = False
 
     def show_start_screen(self):
-        self.start = True
+        self.game_begin = True
         self.start_col = []
         for i in range(len(START_TEXT)):
             self.start_col.append(WHITE)
         self.start_col[0] = YELLOW
-        while g.start:
-            while self.tutorial or self.description:
-                # print(f'{self.tutorial},{self.description}')
+        while g.game_begin:
+            while self.choosing:
+                self.show_choose_screen()
+            while self.tutorial or self.description or self.how_to_play:
                 self.show_screen()
-            self.screen.blit(self.start_img, self.start_img.get_rect())
-            # self.draw_text("GAME START", self.title_font, 150, (34, 139, 34),
-            #                WIDTH // 2, HEIGHT / 4)
-            for i in range(len(START_TEXT)):
-                self.draw_text(START_TEXT[i][0], self.title_font, 75,
-                               self.start_col[i], WIDTH // 2, START_TEXT[i][1])
+            if g.game_begin:
+                self.screen.blit(self.start_img, self.start_img.get_rect())
+                for i in range(len(START_TEXT)):
+                    self.draw_text(START_TEXT[i][0], self.title_font, 75,
+                                   self.start_col[i], WIDTH // 2, START_TEXT[i][1])
             pygame.display.flip()
             self.events()
+
+    def show_choose_screen(self):
+        self.waiting = True
+        self.role1_col = YELLOW
+        self.role2_col = WHITE
+        while self.waiting:
+            self.screen.fill(BLACK)
+            self.draw_text("Choose a role", self.title_font, 100, RED, WIDTH / 2, HEIGHT / 6)
+            h = HEIGHT / 6 + 100
+            self.draw_role(WIDTH / 2 - 314, h, self.role1_img, ROLE1_NAME,
+                           self.role1_col, ROLE1_HEALTH, ROLE1_DAMAGE)
+            self.draw_role(WIDTH / 2 + 50, h, self.role2_img, ROLE2_NAME,
+                           self.role2_col, ROLE2_HEALTH, ROLE2_DAMAGE)
+            pygame.display.flip()
+            self.events()
+        self.choosing = False
 
     def show_go_screen(self):
         self.screen.blit(self.start_img, self.start_img.get_rect())
@@ -283,16 +308,15 @@ class Game:
         self.draw_text("Press [enter] key to play again", self.title_font,
                        60, WHITE, WIDTH // 2, HEIGHT * 3 / 4)
         pygame.display.flip()
-        self.waiting = True
-        while self.waiting:
+        self.again = True
+        while self.again:
             self.events()
 
-    def render_fog(self):
-        # draw the light mask
-        self.fog.fill(NIGHT_COLOR)
+    def make_dark(self):
+        self.dim.fill(DARK_COLOR)
         self.light_rect.center = self.camera.apply(self.player).center
-        self.fog.blit(self.light_mask, self.light_rect)
-        self.screen.blit(self.fog, (0, 0), special_flags=pygame.BLEND_MULT)
+        self.dim.blit(self.light_shape, self.light_rect)
+        self.screen.blit(self.dim, (0, 0), special_flags=pygame.BLEND_MULT)
 
     def draw_player_health(self, x, y, pct):
         surf = self.screen
@@ -335,38 +359,25 @@ class Game:
         text_x = img_rect.centerx
         text_y = img_rect.bottom
         if self.choosing:
-            size = 50
+            size = 40
             text_y = img_rect.bottom + 50
-            self.draw_text(f"health:  {health}", self.hud_font, 30, color, text_x, text_y + 60)
-            self.draw_text(f"attack:  {attack}", self.hud_font, 30, color, text_x, text_y + 100)
+            self.draw_text(f"health:  {health}", self.hud_font, 20, color, text_x, text_y + 35)
+            self.draw_text(f"attack:  {attack}", self.hud_font, 20, color, text_x, text_y + 60)
+            self.draw_text("Press [Q] to upper level", self.title_font,
+                           45, WHITE, WIDTH // 2, HEIGHT * 7 / 8)
         else:
             size = 10
             text_y = img_rect.bottom + 10
 
         self.draw_text(name, self.hud_font, size, color, text_x, text_y)
 
-    def show_choose_screen(self):
-        self.choosing = True
-        self.waiting = True
-        self.role1_col = YELLOW
-        self.role2_col = WHITE
-        while self.waiting:
-            self.screen.fill(BLACK)
-            self.draw_text("choose a role", self.title_font, 100, RED, WIDTH / 2, HEIGHT / 6)
-            h = HEIGHT / 6 + 100
-            self.draw_role(WIDTH / 2 - 314, h, self.role1_img, ROLE1_NAME,
-                           self.role1_col, ROLE1_HEALTH, ROLE1_DAMAGE)
-            self.draw_role(WIDTH / 2 + 50, h, self.role2_img, ROLE2_NAME,
-                           self.role2_col, ROLE2_HEALTH, ROLE2_DAMAGE)
-            pygame.display.flip()
-            self.events()
-        self.choosing = False
-
     def show_screen(self):
         if self.tutorial:
             self.screen.blit(self.tutorial_img, self.tutorial_img.get_rect())
         elif self.description:
             self.screen.blit(self.description_img, self.description_img.get_rect())
+        elif self.how_to_play:
+            self.screen.blit(self.how_img, self.how_img.get_rect())
         pygame.display.flip()
         self.events()
 
@@ -374,7 +385,6 @@ class Game:
 g = Game()
 while True:
     g.show_start_screen()
-    g.show_choose_screen()
     g.new()
     g.run()
     g.show_go_screen()

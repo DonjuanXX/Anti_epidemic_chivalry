@@ -3,7 +3,7 @@ from itertools import chain
 import pygame as pg
 from random import uniform, choice, randint, random
 from settings import *
-from tilemap import collide_hit_rect
+from map import collide_hit_rect
 import pytweening as tween
 
 vec = pg.math.Vector2

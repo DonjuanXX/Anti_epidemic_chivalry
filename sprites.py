@@ -9,9 +9,6 @@ import random
 from settings import *
 
 
-# from itertools import chain
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y, role):
         self._layer = PLAYER_LAYER
@@ -90,18 +87,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.speed = PLAYER_SPEED
 
-    # def hit(self):
-    #     self.damaged = True
-    #     self.damage_alpha = chain(DAMAGE_ALPHA * 3)
 
     def update(self):
         self.gey_keys()
         self.slow()
-        # if self.damaged:
-        #     try:
-        #         self.image.fill((255, 0, 0, next(self.damage_alpha)), special_flags=pygame.BLEND_RGBA_MULT)
-        #     except:
-        #         self.damaged = False
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
@@ -160,8 +149,6 @@ class Weapon(pygame.sprite.Sprite):
 class Virus(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
         self._layer = VIRUS_LAYER
-        # self.groups = game.all_sprites, game.viruses_move, game.viruses_shoot
-        # pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.type = type
         if self.type == 'shoot':
@@ -194,7 +181,7 @@ class Virus(pygame.sprite.Sprite):
             now = pygame.time.get_ticks()
             if now - self.last_shot > BULLET_RATE:
                 self.last_shot = now
-                Bullet(self.game, self.x, self.y)
+                Shooting(self.game, self.x, self.y)
         else:
             self.image = self.game.virus_move_img.copy()
             self.rect.x += self.vx * self.game.dt
@@ -233,10 +220,10 @@ class Virus(pygame.sprite.Sprite):
         pygame.draw.rect(self.image, col, self.health_bar)
 
 
-class Bullet(pygame.sprite.Sprite):
+class Shooting(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self._layer = BULLET_LAYER
-        self.groups = game.all_sprites, game.bullets
+        self.groups = game.all_sprites, game.shooting
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.vx = random.choice(BULLET_SPEED) * self.game.dt
@@ -244,7 +231,7 @@ class Bullet(pygame.sprite.Sprite):
         if self.vx == 0 and self.vy == 0:
             self.kill()
         else:
-            self.image = game.bullet_img
+            self.image = game.shoot_img
             self.rect = self.image.get_rect()
             self.rect.x = x - self.rect.width / 2
             self.rect.y = y - self.rect.height / 2
