@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Dec  4 00:55:27 2020
-
-@author: admin
-"""
-
 import random
 from settings import *
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y, role):
+        """
+        :param game: Game object
+        :param x: Coordinate
+        :param y:  Coordinate
+        :param role: Role1 or Role2
+        """
         self._layer = PLAYER_LAYER
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -39,8 +38,10 @@ class Player(pygame.sprite.Sprite):
         self.last_attack = 0
 
     def gey_keys(self):
-        self.vx, self.vy = 0, 0
-
+        """
+        Get keys and make corresponding actions
+        """
+        self.vx, self.vy = 0, 0  # velocity
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.dir = 'left'
@@ -55,14 +56,18 @@ class Player(pygame.sprite.Sprite):
             self.dir = 'down'
             self.vy = self.speed
         elif keys[pygame.K_SPACE]:
-            self.weapon = Weapon(self.game, self.x, self.y, self.dir, self.role)
-
+            self.weapon = Weapon(self.game, self.x, self.y, self.dir, self.role)  # Show weapon
         if self.role == 'role1':
             self.image = self.game.role1_images[self.dir]
         else:
             self.image = self.game.role2_images[self.dir]
 
     def collide(self, group, dir):
+        """
+        Detect collision
+        :param group: Sprite group
+        :param dir: Direction
+        """
         hits = pygame.sprite.spritecollide(self, group, False)
         if hits:
             if dir == 'x':
@@ -81,12 +86,14 @@ class Player(pygame.sprite.Sprite):
                 self.rect.y = self.y
 
     def slow(self):
+        """
+        Check if the player is in the deceleration zone
+        """
         hits = pygame.sprite.spritecollide(self, self.game.decelerations, False)
         if hits:
             self.speed = PLAYER_SPEED_SLOW
         else:
             self.speed = PLAYER_SPEED
-
 
     def update(self):
         self.gey_keys()
@@ -101,17 +108,31 @@ class Player(pygame.sprite.Sprite):
         self.collide(self.game.viruses_shoot, 'y')
 
     def add_health(self, amount):
+        """
+        Player add blood
+        """
         self.health += amount
         if self.health > self.health_orig:
             self.health = self.health_orig
 
     def reduce_health(self, amount):
+        """
+        Player blood loss
+        """
         self.game.player_hit_sound.play()
         self.health -= amount
 
 
 class Weapon(pygame.sprite.Sprite):
     def __init__(self, game, x, y, dir, role):
+        """
+        Initialize the weapon, able to change according to role and direction
+        :param game: Game object
+        :param x: Coordinate
+        :param y: Coordinate
+        :param dir: Direction
+        :param role: Player role
+        """
         self._layer = WEAPON_LAYER
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -138,9 +159,8 @@ class Weapon(pygame.sprite.Sprite):
 
     def update(self):
         self.kill()
-        hits = pygame.sprite.spritecollide(self, self.game.viruses_shoot, False) + pygame.sprite.spritecollide(self,
-                                                                                                               self.game.viruses_move,
-                                                                                                               False)
+        hits = pygame.sprite.spritecollide(self, self.game.viruses_shoot, False) + \
+               pygame.sprite.spritecollide(self, self.game.viruses_move, False)
         if hits:
             self.game.mob_hit_sound.play()
             hits[0].health -= self.game.player.damage
@@ -148,6 +168,13 @@ class Weapon(pygame.sprite.Sprite):
 
 class Virus(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
+        """
+        Initialize different viruses
+        :param game: Game object
+        :param x: Coordinate
+        :param y: Coordinate
+        :param type: The type of virus
+        """
         self._layer = VIRUS_LAYER
         self.game = game
         self.type = type
@@ -177,18 +204,18 @@ class Virus(pygame.sprite.Sprite):
 
     def update(self):
         if self.type == 'shoot':
-            self.image = self.game.virus_shoot_img.copy()
+            self.image = self.game.virus_shoot_img.copy()  # Prevent the modification from affecting others
             now = pygame.time.get_ticks()
-            if now - self.last_shot > BULLET_RATE:
+            if now - self.last_shot > SHOOT_RATE:  # Compare shooting time intervals and select shooting
                 self.last_shot = now
                 Shooting(self.game, self.x, self.y)
         else:
             self.image = self.game.virus_move_img.copy()
-            self.rect.x += self.vx * self.game.dt
+            self.rect.x += self.vx * self.game.dt  # Position change
             self.rect.y += self.vy * self.game.dt
             dis_x = abs(self.rect.x - self.x_orig)
             dis_y = abs(self.rect.y - self.y_orig)
-            if dis_x > VIRUS_MOVE_DISTANCE or dis_y > VIRUS_MOVE_DISTANCE:
+            if dis_x > VIRUS_MOVE_DISTANCE or dis_y > VIRUS_MOVE_DISTANCE:  # Move within a fixed range
                 self.rect.x = self.x
                 self.rect.y = self.y
                 self.vx = -self.vx
@@ -200,9 +227,12 @@ class Virus(pygame.sprite.Sprite):
             self.kill()
             self.game.map_img.blit(self.game.splat, (self.x - 40, self.y - 30))
             if random.random() > 0.8:
-                Item(self.game, self.x - 5, self.y, 'treatment')
+                Item(self.game, self.x - 5, self.y, 'treatment')  # 20% chance of getting a medical kit
 
     def draw_health(self):
+        """
+        The blood volume of the virus, different blood volume has different colors
+        """
         if self.type == 'shoot':
             pct = self.health / VIRUS_SHOOT_HEALTH
         else:
@@ -222,12 +252,18 @@ class Virus(pygame.sprite.Sprite):
 
 class Shooting(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
+        """
+        The material projected by the virus will drop blood if it collides with the player
+        :param game: Game object
+        :param x: Coordinate
+        :param y: Coordinate
+        """
         self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.shooting
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.vx = random.choice(BULLET_SPEED) * self.game.dt
-        self.vy = random.choice(BULLET_SPEED) * self.game.dt
+        self.vx = random.choice(SHOOT_SPEED) * self.game.dt
+        self.vy = random.choice(SHOOT_SPEED) * self.game.dt
         if self.vx == 0 and self.vy == 0:
             self.kill()
         else:
@@ -240,11 +276,19 @@ class Shooting(pygame.sprite.Sprite):
         self.rect.x += self.vx
         self.rect.y += self.vy
         if pygame.sprite.spritecollideany(self, self.game.walls):
-            self.kill()
+            self.kill()  # It disappears when it collides with anything
 
 
-class Obstacle(pygame.sprite.Sprite):
+class Wall(pygame.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
+        """
+        Create the wall
+        :param game: Game object
+        :param x: Left
+        :param y: Top
+        :param w: Width
+        :param h: Height
+        """
         self._layer = WALL_LAYER
         self.groups = game.walls
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -256,6 +300,14 @@ class Obstacle(pygame.sprite.Sprite):
 
 class Hole(pygame.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
+        """
+        Create the hole
+        :param game: Game object
+        :param x: Left
+        :param y: Top
+        :param w: Width
+        :param h: Height
+        """
         self._layer = WALL_LAYER
         self.groups = game.holes
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -267,6 +319,14 @@ class Hole(pygame.sprite.Sprite):
 
 class Deceleration(pygame.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
+        """
+        Create the deceleration zone
+        :param game: Game object
+        :param x: Left
+        :param y: Top
+        :param w: Width
+        :param h: Height
+        """
         self._layer = WALL_LAYER
         self.groups = game.decelerations
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -278,6 +338,14 @@ class Deceleration(pygame.sprite.Sprite):
 
 class Holdback(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
+        """
+        Create the wall cold be open
+        :param game: Game object
+        :param x: Left
+        :param y: Top
+        :param w: Width
+        :param h: Height
+        """
         self._layer = WALL_LAYER
         self.groups = game.all_sprites, game.walls, game.holdbacks
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -290,6 +358,13 @@ class Holdback(pygame.sprite.Sprite):
 
 class Item(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
+        """
+        Items that could be picked up
+        :param game:
+        :param x: Coordinate
+        :param y: Coordinate
+        :param type: The type of items
+        """
         self._layer = ITEMS_LAYER
         self.groups = game.all_sprites, game.items
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -301,5 +376,8 @@ class Item(pygame.sprite.Sprite):
         self.type = type
 
     def picked(self):
+        """
+        Pick up items
+        """
         self.game.item_pick_sound.play()
         self.kill()

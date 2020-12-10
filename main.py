@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Nov 29 23:45:16 2020
-
-@author: admin
-"""
-
 import sys
 from os import path
 from map import *
@@ -25,7 +18,6 @@ class Game:
         self.choosing = False
         self.how_to_play = False
         self.playing = False
-        self.waiting = False
         self.again = False
         self.paused = False
         self.tutorial = False
@@ -107,7 +99,7 @@ class Game:
         self.viruses_move = pygame.sprite.Group()
         self.shooting = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
-        self.map = TiledMap(path.join(self.map_folder, 'new_tilemap.tmx'))
+        self.map = Map(path.join(self.map_folder, 'new_tilemap.tmx'))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         self.dark = True
@@ -120,7 +112,7 @@ class Game:
                 else:
                     self.player = Player(self, obj_centerx, obj_centery, 'role2')
             if tile_object.name == 'wall':
-                Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+                Wall(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'hole':
                 Hole(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'deceleration':
@@ -155,13 +147,13 @@ class Game:
         Update on collisions between different sprites
         """
         self.all_sprites.update()
-        self.camera.update(self.player)
+        self.camera.update(self.player)  # The camera is updated with users
         self.viruses_amount = len(self.viruses_move) + len(self.viruses_shoot)
         if self.viruses_amount == 0:
             self.win = True
             self.playing = False
         hits = pygame.sprite.spritecollide(self.player, self.items, False)
-        for hit in hits:
+        for hit in hits:  # Pick up items
             if hit.type == 'treatment' and self.player.health < self.player.health_orig:
                 hit.picked()
                 self.player.add_health(HEALTH_PILL_AMOUNT)
@@ -173,12 +165,12 @@ class Game:
                 hit.picked()
                 self.dark = False
 
-        hits = pygame.sprite.spritecollide(self.player, self.holes, False)
+        hits = pygame.sprite.spritecollide(self.player, self.holes, False)  # Crash blood
         for hit in hits:
             self.player.reduce_health(HOLE_DAMAGE)
         hits = pygame.sprite.spritecollide(self.player, self.shooting, True)
         for hit in hits:
-            self.player.reduce_health(BULLET_DAMAGE)
+            self.player.reduce_health(SHOOT_DAMAGE)
         hits = pygame.sprite.spritecollide(self.player, self.viruses_move, False)
         for hit in hits:
             if hit.type == 'move_x' or hit.type == 'move_y':
@@ -189,8 +181,7 @@ class Game:
 
     def draw(self):
         """
-
-        :return:
+        Draw the game screen
         """
         self.screen.blit(self.map_img, self.camera.apply_rect(self.map_rect))
         for sprite in self.all_sprites:
@@ -212,6 +203,9 @@ class Game:
         sys.exit()
 
     def events(self):
+        """
+        In the non-game interface, handle user actions
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
@@ -227,7 +221,7 @@ class Game:
                             self.description = False
                             self.tutorial = False
                             break
-                    for i in range(len(START_TEXT)):
+                    for i in range(len(START_TEXT)):  # Judge the selection and change the color
                         if self.start_col[i] == YELLOW:
                             if event.key == pygame.K_DOWN:
                                 self.start_col[i] = WHITE
@@ -251,7 +245,7 @@ class Game:
                                 self.tutorial = True
                             elif event.key == pygame.K_RETURN and START_TEXT[i][0] == 'Description':
                                 self.description = True
-                if self.choosing:
+                elif self.choosing:  # Selection role interface
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                         if self.role1_col == YELLOW:
                             self.role1_col = WHITE
@@ -261,24 +255,23 @@ class Game:
                             self.role1_col = YELLOW
                     if event.key == pygame.K_q:
                         self.choosing = False
-                        self.waiting = False
                         self.start = True
-                        break
+                    if event.key == pygame.K_RETURN:
+                        self.choosing = False
+                        self.how_to_play = True
 
-                if self.waiting and event.key == pygame.K_RETURN:
-                    self.waiting = False
-                    # self.start = True
-                    self.how_to_play = True
-
-                elif self.how_to_play and event.key == pygame.K_RETURN:
+                elif self.how_to_play and event.key == pygame.K_RETURN:  # How to play interface
                     self.how_to_play = False
                     self.game_begin = False
 
-                elif self.again and event.key == pygame.K_RETURN:
+                elif self.again and event.key == pygame.K_RETURN:  # Waiting play again
                     self.start = True
                     self.again = False
 
     def show_start_screen(self):
+        """
+        Game start interface
+        """
         self.game_begin = True
         self.start_col = []
         for i in range(len(START_TEXT)):
@@ -298,10 +291,13 @@ class Game:
             self.events()
 
     def show_choose_screen(self):
-        self.waiting = True
+        """
+        Game role selection interface
+        """
+        # self.choosing = True
         self.role1_col = YELLOW
         self.role2_col = WHITE
-        while self.waiting:
+        while self.choosing:
             self.screen.fill(BLACK)
             self.draw_text("Choose a role", self.title_font, 100, RED, WIDTH / 2, HEIGHT / 6)
             h = HEIGHT / 6 + 100
@@ -314,6 +310,9 @@ class Game:
         self.choosing = False
 
     def show_go_screen(self):
+        """
+        Game over interface
+        """
         self.screen.blit(self.start_img, self.start_img.get_rect())
         if self.win:
             txt = "YOU WIN !"
@@ -329,23 +328,32 @@ class Game:
             self.events()
 
     def make_dark(self):
+        """
+        Increase the dark effect of the game interface
+        """
         self.dim.fill(DARK_COLOR)
-        self.light_rect.center = self.camera.apply(self.player).center
+        self.light_rect.center = self.camera.apply(self.player).center  # fix Player be the center of light
         self.dim.blit(self.light_shape, self.light_rect)
-        self.screen.blit(self.dim, (0, 0), special_flags=pygame.BLEND_MULT)
+        self.screen.blit(self.dim, (0, 0), special_flags=pygame.BLEND_MULT)  # Does not affect fully transparent pixels
 
-    def draw_player_health(self, x, y, pct):
+    def draw_player_health(self, x, y, pbp):
+        """
+        Draw HP
+        :param x: coordinate
+        :param y: coordinate
+        :param pbp: player blood volume percentage
+        """
         surf = self.screen
-        if pct < 0:
-            pct = 0
+        if pbp < 0:
+            pbp = 0
         BAR_LENGTH = 100
         BAR_HEIGHT = 20
-        fill = pct * BAR_LENGTH
+        fill = pbp * BAR_LENGTH
         outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
         fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
-        if pct > 0.6:
+        if pbp > 0.6:
             col = GREEN
-        elif pct > 0.3:
+        elif pbp > 0.3:
             col = YELLOW
         else:
             col = RED
@@ -358,6 +366,16 @@ class Game:
             self.draw_role(14, 10, self.role2_img_mini, ROLE2_NAME, WHITE)
 
     def draw_text(self, text, font_name, size, color, x, y, align='c'):
+        """
+        Draw text on the screen
+        :param text: Text to be presented
+        :param font_name: Font
+        :param size: Font size
+        :param color: Font color
+        :param x: Coordinate
+        :param y: Coordinate
+        :param align: Align position
+        """
         font = pygame.font.Font(font_name, size)
         text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect()
@@ -368,12 +386,21 @@ class Game:
         self.screen.blit(text_surface, text_rect)
 
     def draw_role(self, x, y, img, name, color, health="", attack=""):
+        """
+        Draw role information
+        :param x: Coordinate
+        :param y: Coordinate
+        :param img: Role image
+        :param name: Role name
+        :param color: Font color
+        :param health:  Role attributes
+        :param attack: Role attributes
+        """
         img_rect = img.get_rect()
         img_rect.x = x
         img_rect.y = y
         self.screen.blit(img, img_rect)
         text_x = img_rect.centerx
-        text_y = img_rect.bottom
         if self.choosing:
             size = 40
             text_y = img_rect.bottom + 50
@@ -388,6 +415,9 @@ class Game:
         self.draw_text(name, self.hud_font, size, color, text_x, text_y)
 
     def show_screen(self):
+        """
+        Show game tutorial/description/how_to_play interface
+        """
         if self.tutorial:
             self.screen.blit(self.tutorial_img, self.tutorial_img.get_rect())
         elif self.description:

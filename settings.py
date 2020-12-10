@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Dec  3 23:06:54 2020
-
-@author: admin
-"""
 import pygame
 
 # Color
@@ -16,7 +10,7 @@ YELLOW = pygame.Color("yellow")
 DARK_COLOR = (20, 20, 20)
 
 
-# Basic parameters
+# Basic parameters  Super VGA
 WIDTH = 1024
 HEIGHT = 768
 FPS = 60
@@ -70,9 +64,9 @@ VIRUS_MOVE_DISTANCE = 200
 BLOOD = 'blood.png'
 
 SHOOT_IMG = 'shoot.png'
-BULLET_SPEED = [0, 300, -300]
-BULLET_RATE = 500
-BULLET_DAMAGE = 5
+SHOOT_SPEED = [0, 300, -300]
+SHOOT_RATE = 500
+SHOOT_DAMAGE = 5
 
 HOLE_DAMAGE = 0.5
 
